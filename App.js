@@ -1,6 +1,6 @@
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, View, Button, TextInput } from 'react-native';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import MapView, { Marker } from'react-native-maps';
 import * as Location from'expo-location';
 
@@ -13,8 +13,28 @@ const initial = {
   longitudeDelta: 0.0221
 };
 
+const [location, setLocation] = useState(null);
 const [region, setRegion] = useState(initial);
 const [address, setAddress] = useState('');
+
+useEffect(() => {
+  const fetchLocation = async () => {
+  let { status } = await Location.requestForegroundPermissionsAsync();
+  if (status !== 'granted') {
+    Alert.alert('No permission to get location');
+  } else {
+    try {
+      let location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
+      setLocation(location);
+      console.log('Location:', location);
+      setRegion({...region, latitude: location.coords.latitude, longitude: location.coords.longitude});
+    }catch (error){
+      console.log(error.message);
+    }
+  }
+}
+fetchLocation();
+}, []);
 
 const fetchCoordinates = async (address) => {
   const KEY = "54PPLKB7FdF9fg9z9E8ruZy14MPAPU6S";
