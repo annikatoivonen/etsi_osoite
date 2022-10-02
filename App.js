@@ -2,57 +2,58 @@ import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, View, Button, TextInput } from 'react-native';
 import React, { useState } from 'react';
 import MapView, { Marker } from'react-native-maps';
+import * as Location from'expo-location';
 
 export default function App() {
 
-  const [text, setText] = useState('');
-  const [map, setMap] = useState([]);
-  const [lat, setLat] = useState(60.201373);
-  const [lng, setLng] = useState(24.934041);
-
-  const showMap = () => {
-    fetch('https://www.mapquestapi.com/geocoding/v1/address?key=54PPLKB7FdF9fg9z9E8ruZy14MPAPU6S&inFormat=kvp&outFormat=json&location=Ratapihantie+13%2C+00100+Helsinki%2C+Finland&thumbMaps=false')
-    .then(response => response.json())
-    .then(data => setMap(data.results))
-    .catch(error => {
-      Alert.alert('Error', error);
-    });
-
-    Number(setLat(map.locations.latLng.lat));
-    Number(setLng(map.locations.latLng.lng));
-}
-
-
-const region = {
-      latitude: lat,
-      longitude: lng,
-      latitudeDelta: 0.0322,
-      longitudeDelta: 0.0221
+const initial = {
+  latitude: 60.200692,
+  longitude: 24.934302,
+  latitudeDelta: 0.0322,
+  longitudeDelta: 0.0221
 };
 
+const [region, setRegion] = useState(initial);
+const [address, setAddress] = useState('');
+
+const fetchCoordinates = async (address) => {
+  const KEY = "54PPLKB7FdF9fg9z9E8ruZy14MPAPU6S";
+  const url = 'http://www.mapquestapi.com/geocoding/v1/address?key='+KEY+'&location='+address;
+
+  try{
+    const response = await fetch(url);
+    const data = await response.json();
+
+    const { lat, lng } = data.results[0].locations[0].latLng;
+    console.log(lat, lng);
+    setRegion({...region, latitude: lat, longitude: lng})
+  }
+  catch (error){
+    console.log('haku epäonnistui', error.message);
+  }
+  keybpard.dismiss();
+}
 
   return (
     <View style={styles.container}>
       <MapView  style={styles.map}
       region={region}>
         <Marker
-        coordinate={{
-          latitude: lat,
-          longitude: lng}}
-          title={text}>
+        coordinate={region}>
         </Marker>
       </MapView>
       <View style={{flex: 1}}>
       <TextInput
       style={styles.input}
       placeholder="Esim. Ratapihantie 13, 00100 Helsinki"
-      onChangeText={setText}
-      value={text}>
+      value={address}
+      onChangeText={text => setAddress(text)}
+      >
       </TextInput>
       <Button
       style={styles.button}
       title="SHOW"
-      onPress={showMap}>
+      onPress={() => fetchCoordinates(address)}>
       </Button>
       </View>
       <StatusBar style="auto" />
